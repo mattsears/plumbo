@@ -212,34 +212,58 @@ module Plumbo
           var counts = document.querySelectorAll("#plumbo .plumbo-count");
           for (var j = 0; j < counts.length; j++){ counts[j].textContent = rows.length; }
         }
-        // Register a custom Turbo Stream action that appends the files from a
-        // Turbo request to the existing list, skipping paths already shown, so
-        // the panel accumulates instead of replacing the original page's files.
-        function register(){
-          var turbo = window.Turbo;
-          if (!turbo || !turbo.StreamActions || turbo.StreamActions["plumbo-append"]) return;
-          turbo.StreamActions["plumbo-append"] = function(){
-            var list = this.targetElements[0];
-            if (!list) return;
-            var seen = {};
-            var existing = list.querySelectorAll("[data-path]");
-            for (var i = 0; i < existing.length; i++){ seen[existing[i].getAttribute("data-path")] = true; }
-            var incoming = this.templateContent.querySelectorAll("li");
-            for (var k = 0; k < incoming.length; k++){
-              var row = incoming[k];
-              var button = row.querySelector("[data-path]");
-              var path = button ? button.getAttribute("data-path") : null;
-              if (path && !seen[path]){ seen[path] = true; list.appendChild(row); }
-            }
-            renumber(list);
-            refresh();
+        var ICONS = {#{ICONS.map { |key, svg| "#{key}:'#{svg.strip}'" }.join(',')}};
+        function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+        // Build a file row from [path, depth, category], mirroring the server.
+        function buildRow(path, depth, category){
+          var safe = escapeHtml(path);
+          var indent = depth > 0 ? ' style="margin-left:' + (depth * 12) + 'px"' : '';
+          var icon = ICONS[category] || ICONS.file;
+          return '<li><button type="button" class="plumbo-row" data-plumbo-copy data-path="' + safe + '" data-category="' + escapeHtml(category) + '">'
+            + '<span class="plumbo-index"></span>'
+            + '<span class="plumbo-type"' + indent + '>' + icon + '</span>'
+            + '<span class="plumbo-path">' + safe + '</span>'
+            + '<span class="plumbo-copy">' + ICONS.copy + '</span>'
+            + '</button></li>';
+        }
+        // Merge the files from an X-Plumbo-Files header into the panel, skipping
+        // paths already listed, then renumber and rebuild chips/filter.
+        function mergeFiles(encoded){
+          var root = document.getElementById("plumbo");
+          if (!root) return;
+          var list = root.querySelector("#plumbo-list");
+          if (!list) return;
+          var data;
+          try { data = JSON.parse(atob(encoded)); } catch (e) { return; }
+          var seen = {};
+          var existing = list.querySelectorAll("[data-path]");
+          for (var i = 0; i < existing.length; i++){ seen[existing[i].getAttribute("data-path")] = true; }
+          var html = "";
+          for (var j = 0; j < data.length; j++){
+            var path = data[j][0];
+            if (seen[path]) continue;
+            seen[path] = true;
+            html += buildRow(path, data[j][1], data[j][2]);
+          }
+          if (html) { list.insertAdjacentHTML("beforeend", html); renumber(list); }
+          refresh();
+        }
+        refresh();
+        // Read the file list off every fetch response (Turbo Drive/Frame/Stream
+        // and custom fetch all go through fetch) so the panel keeps up without a
+        // full reload. Reading a header doesn't consume the response body.
+        if (window.fetch){
+          var plumboFetch = window.fetch;
+          window.fetch = function(){
+            return plumboFetch.apply(this, arguments).then(function(response){
+              try { var data = response.headers.get("X-Plumbo-Files"); if (data) mergeFiles(data); } catch (e) {}
+              return response;
+            });
           };
         }
-        register();
-        refresh();
         // A full Turbo Drive visit swaps in a fresh panel; reset the filter to
         // match the new page, then rebuild.
-        document.addEventListener("turbo:load", function(){ query = ""; activeCategory = null; register(); refresh(); });
+        document.addEventListener("turbo:load", function(){ query = ""; activeCategory = null; refresh(); });
       })();
     JS
 
@@ -263,20 +287,6 @@ module Plumbo
           </div>
           <script>#{JS}</script>
         </div>
-      HTML
-    end
-
-    # A Turbo Stream that merges this request's files into the panel already on
-    # the page, so the list accumulates across Turbo Stream/Frame requests that
-    # never trigger a full page reload. The custom "plumbo-append" action (see
-    # the JS) appends only paths not already listed, then renumbers and updates
-    # the count — preserving the original page's files and the open/closed state.
-    # Returns "" when there's nothing to add.
-    def turbo_update(files)
-      return "" if files.empty?
-
-      <<~HTML
-        <turbo-stream action="plumbo-append" target="plumbo-list"><template>#{rows(files)}</template></turbo-stream>
       HTML
     end
 

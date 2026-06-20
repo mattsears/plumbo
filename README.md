@@ -39,10 +39,12 @@ template that rendered them. For each rendered template/partial it also scans th
 file's source for `data-controller` attributes and nests the matching Stimulus
 controllers beneath it, mapping each identifier to its source file via the
 standard naming convention (`data-controller="users--list-item"` →
-`app/javascript/controllers/users/list_item_controller.js`). On an HTML response
-it injects the panel before `</body>`; Turbo Stream/Frame responses are handled
-too, so newly rendered files (including their Stimulus controllers) accumulate as
-you navigate. Nothing is added to your asset pipeline.
+`app/javascript/controllers/users/list_item_controller.js`). On a full HTML
+response it injects the panel before `</body>`. Every rendered response also
+carries an `X-Plumbo-Files` header listing its files, and the panel's script
+reads that header off each `fetch` — so Turbo Drive, Frame, and Stream
+navigations (and custom fetch-based panes) all refresh the list without a full
+reload. Nothing is added to your asset pipeline.
 
 Only Stimulus controllers written as `data-controller` in a rendered `.erb` are
 detected — controllers emitted by helpers/ViewComponents, and other JavaScript

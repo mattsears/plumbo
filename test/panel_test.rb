@@ -50,20 +50,6 @@ class PanelTest < Minitest::Test
     assert_includes html, 'data-category="javascript"'
   end
 
-  def test_turbo_update_returns_an_append_stream_targeting_the_list
-    html = Plumbo::Panel.turbo_update(
-      ["@app/controllers/posts_controller.rb", "@app/views/posts/show.html.erb"]
-    )
-
-    assert_includes html, '<turbo-stream action="plumbo-append" target="plumbo-list">'
-    assert_includes html, "@app/controllers/posts_controller.rb"
-    assert_includes html, "@app/views/posts/show.html.erb"
-  end
-
-  def test_turbo_update_is_blank_when_no_files
-    assert_equal "", Plumbo::Panel.turbo_update([])
-  end
-
   def test_escapes_paths
     html = Plumbo::Panel.render(['@app/views/x"<>.erb'])
 

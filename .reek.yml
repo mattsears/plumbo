@@ -1,0 +1,42 @@
+---
+# .reek.yml — installed by rails-cto
+# Rails-friendly Reek configuration compatible with Reek 6.5+.
+
+detectors:
+  IrresponsibleModule:
+    enabled: false
+  InstanceVariableAssumption:
+    enabled: false
+  TooManyStatements:
+    max_statements: 10
+  LongParameterList:
+    max_params: 4
+  TooManyInstanceVariables:
+    max_instance_variables: 6
+  TooManyMethods:
+    max_methods: 20
+  UncommunicativeMethodName:
+    accept:
+      - e
+      - t
+      - q
+      - x
+      - y
+  # Plumbo::Configuration is a settings object: writable attributes are the
+  # point, and its private helpers detect an optional Rails host via respond_to?
+  # and the global Rails constant, which reek reads as utility/manual-dispatch.
+  Attribute:
+    exclude:
+      - Plumbo::Configuration
+  UtilityFunction:
+    exclude:
+      - Plumbo::Configuration#rails_development?
+      - Plumbo::Configuration#rails_root
+  ManualDispatch:
+    exclude:
+      - Plumbo::Configuration#rails_development?
+      - Plumbo::Configuration#rails_root
+
+exclude_paths:
+  - test
+  - db/migrate

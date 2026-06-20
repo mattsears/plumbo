@@ -1,0 +1,4 @@
+---
+# .bundler-audit.yml — installed by rails-cto
+# Add advisory IDs here to ignore known false positives
+ignore: []

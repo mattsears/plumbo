@@ -1,0 +1,87 @@
+---
+# .rubocop.yml — installed by rails-cto
+# https://github.com/mattsears/rails-cto-gem
+
+plugins:
+  - rubocop-rails
+  - rubocop-minitest
+  - rails-cto
+
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "bin/**/*"
+    - "db/schema.rb"
+    - "db/migrate/**/*"
+    - "node_modules/**/*"
+    - "vendor/**/*"
+    - "tmp/**/*"
+    - "log/**/*"
+    - "coverage/**/*"
+    - "public/**/*"
+    - "config/boot.rb"
+    - "config/environment.rb"
+
+Layout/LineLength:
+  Max: 120
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - "test/**/*"
+
+Metrics/ClassLength:
+  Max: 200
+  Exclude:
+    - "test/**/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+    - "config/routes.rb"
+    - "config/environments/*.rb"
+    - "Rakefile"
+    - "lib/tasks/**/*.rake"
+
+Metrics/AbcSize:
+  Max: 20
+
+# The panel module is mostly inline CSS/JS/SVG heredocs (template data, not
+# logic), so count each heredoc as a single line for length metrics.
+Metrics/ModuleLength:
+  CountAsOne:
+    - array
+    - hash
+    - heredoc
+
+Rails:
+  Enabled: true
+
+# plumbo is a plain Ruby gem, not a Rails app: its tests use vanilla
+# Minitest::Test, which has no assert_not_* helpers (those are ActiveSupport
+# additions). This cop would rewrite valid refute_* calls into methods that
+# don't exist here, breaking the suite.
+Rails/RefuteMethods:
+  Enabled: false
+
+Minitest:
+  Enabled: true
+
+# This gem's tests intentionally group related assertions in one test method
+# rather than following the Rails Spec-DSL one-assertion convention.
+Minitest/MultipleAssertions:
+  Enabled: false
+
+RailsCTO/MinitestSubject:
+  Enabled: true

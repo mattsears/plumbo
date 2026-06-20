@@ -1,0 +1,15 @@
+---
+# config/brakeman.yml — installed by rails-cto
+# See https://brakemanscanner.org/docs/options/ for all options
+
+# Only report high and medium confidence warnings
+:min_confidence: 1
+
+# Output format (overridden by CLI flags, but serves as default)
+:output_format: json
+
+# Quiet mode — suppress informational messages
+:quiet: true
+
+# Ignored warning fingerprints (add false positives here)
+:ignored_warnings: []

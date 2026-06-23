@@ -1,13 +1,13 @@
 # Plumbo
 
-A zero-config development panel that traces every file behind the page you're
+A zero-config development panel that lists every file behind the page you're
 looking at — controller, helper, layout, templates, partials, and the Stimulus
-controllers in use — and lets you copy them as `@`-prefixed paths to paste
-straight into an AI assistant.
+controllers in use — so you can copy their paths straight into an AI assistant.
 
-It's **self-contained**: a Rack middleware injects its own HTML, scoped CSS, and
-vanilla JS before `</body>`. No Tailwind, no Stimulus, no JS bundler, no view or
-layout changes. Drop it into any Rails app.
+Paths copy `@`-prefixed (e.g. `@app/views/posts/index.html.erb`), ready to paste
+as file mentions. Plumbo is **self-contained**: a Rack middleware injects its own
+HTML, CSS, and JavaScript — nothing is added to your asset pipeline, and there are
+no view, layout, or bundler changes. Drop it into any Rails app.
 
 ## Install
 
@@ -22,33 +22,20 @@ end
 bundle install
 ```
 
-That's it. Boot your app in development and a small badge appears in the
-bottom-right showing how many files rendered the current page. Click it for the
-list; click a row to copy that path, or "Copy All" for the whole list. When the
-list gets long, use the filter box to search by path or the type chips
-(Controllers, Views, Partials, Stimulus, …) to show just one kind of file.
+That's it. Boot your app in development and a badge appears in the bottom-right
+showing how many files rendered the current page.
 
-## How it works
+## Using the panel
 
-A `Railtie` inserts `Plumbo::Middleware`. For each request the middleware
-subscribes (scoped to the request thread) to ActionView's
-`render_template` / `render_partial` / `render_layout` notifications and
-`process_action.action_controller`, collecting every file under your app root in
-render order (controller and helper first), with partials indented under the
-template that rendered them. For each rendered template/partial it also scans the
-file's source for `data-controller` attributes and nests the matching Stimulus
-controllers beneath it, mapping each identifier to its source file via the
-standard naming convention (`data-controller="users--list-item"` →
-`app/javascript/controllers/users/list_item_controller.js`). On a full HTML
-response it injects the panel before `</body>`. Every rendered response also
-carries an `X-Plumbo-Files` header listing its files, and the panel's script
-reads that header off each `fetch` — so Turbo Drive, Frame, and Stream
-navigations (and custom fetch-based panes) all refresh the list without a full
-reload. Nothing is added to your asset pipeline.
-
-Only Stimulus controllers written as `data-controller` in a rendered `.erb` are
-detected — controllers emitted by helpers/ViewComponents, and other JavaScript
-(entry points, plain modules), are not listed.
+- **Click the badge** to open the list — a tree, in render order, with partials
+  and Stimulus controllers nested (and color-coded) under their parent.
+- **Collapse or expand** a parent by clicking its row; **copy** a single path with
+  its copy icon, or **Copy All** for the whole (filtered) list.
+- **Filter** by typing in the search box, or click a type chip — Controllers,
+  Views, Partials, Stimulus, … — to show just one kind.
+- **Clear All** empties the list so you can watch fresh files appear as you click
+  around. The list keeps up with Turbo (Drive, Frames, and Streams) without a
+  full page reload.
 
 ## Configuration
 
@@ -60,16 +47,28 @@ Plumbo.configure do |c|
   c.enabled          = Rails.env.development?  # default: true only in development
   c.path_prefix      = "@"                     # default "@"; set "" for bare paths
   c.max_files        = 500                     # safety cap on listed files
-  c.include_stimulus = true                    # list Stimulus controllers (default true)
+  c.include_stimulus = true                    # list Stimulus controllers
   c.javascript_root  = "app/javascript"        # source dir Stimulus paths map into
 end
 ```
 
+## How it works
+
+A Railtie inserts a Rack middleware that subscribes to ActionView's render
+notifications for each request, collecting every file under your app root in call
+order. It also scans rendered templates for `data-controller` attributes and maps
+each to its Stimulus source file. The panel is injected into full HTML pages, and
+every response carries an `X-Plumbo-Files` header that the panel reads on each
+`fetch` to stay current across Turbo navigations.
+
+> Only Stimulus controllers written as `data-controller` in a rendered `.erb` are
+> detected — those emitted by helpers or ViewComponents, and other JavaScript,
+> aren't listed.
+
 ## Notes
 
-- The icons are from [Lucide](https://lucide.dev) (ISC license).
-- Production-safe: disabled outside development by default, and the middleware
-  early-returns when disabled.
+- Production-safe: disabled outside development by default.
+- Icons from [Lucide](https://lucide.dev) (ISC license).
 
 ## License
 

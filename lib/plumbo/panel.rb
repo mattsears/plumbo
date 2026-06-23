@@ -49,8 +49,11 @@ module Plumbo
       clear: <<~SVG,
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
       SVG
-      check: <<~SVG
+      check: <<~SVG,
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      SVG
+      chevron: <<~SVG
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       SVG
     }.freeze
 
@@ -72,7 +75,7 @@ module Plumbo
       #plumbo *{box-sizing:border-box}
       #plumbo .plumbo-toggle{display:flex;align-items:center;gap:6px;background:#111827;color:#d1d5db;border:1px solid rgba(255,255,255,.1);border-radius:9999px;padding:8px 12px;cursor:pointer;box-shadow:0 10px 15px -3px rgba(0,0,0,.35)}
       #plumbo .plumbo-toggle:hover{background:#1f2937;color:#fff}
-      #plumbo .plumbo-panel{position:absolute;bottom:3rem;right:0;width:34rem;max-width:90vw;max-height:70vh;background:#111827;color:#d1d5db;border:1px solid rgba(255,255,255,.1);border-radius:8px;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden}
+      #plumbo .plumbo-panel{position:absolute;bottom:3rem;right:0;width:34rem;max-width:90vw;height:70vh;max-height:90vh;background:#111827;color:#d1d5db;border:1px solid rgba(255,255,255,.1);border-radius:8px;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden}
       #plumbo .plumbo-panel[hidden]{display:none}
       #plumbo .plumbo-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
       #plumbo .plumbo-title{font-weight:600;color:#fff;font-size:13px}
@@ -91,15 +94,30 @@ module Plumbo
       #plumbo .plumbo-chip{flex:none;white-space:nowrap;color:#9ca3af;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9999px;padding:2px 8px;font-size:10px}
       #plumbo .plumbo-chip:hover{background:rgba(255,255,255,.1);color:#fff}
       #plumbo .plumbo-chip[aria-pressed="true"]{background:#2563eb;border-color:#2563eb;color:#fff}
-      #plumbo .plumbo-list{list-style:none;margin:0;padding:0;overflow-y:auto}
-      #plumbo .plumbo-row{display:flex;align-items:center;gap:12px;width:100%;padding:8px 16px;color:#d1d5db;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)}
-      #plumbo .plumbo-row:hover{background:rgba(255,255,255,.05);color:#fff}
-      #plumbo .plumbo-index{width:20px;flex:none;text-align:left;color:#4b5563}
+      #plumbo .plumbo-list{flex:1;min-height:0;list-style:none;margin:0;padding:0;overflow-y:auto;background:#0b1220}
+      #plumbo .plumbo-row{--d:0;display:flex;align-items:center;gap:8px;width:100%;padding:7px 16px;padding-left:calc(16px + var(--d) * 14px);color:#d1d5db;text-align:left;cursor:default;background-image:repeating-linear-gradient(to right,rgba(255,255,255,.09) 0,rgba(255,255,255,.09) 1px,transparent 1px,transparent 14px);background-repeat:no-repeat;background-position:20px 0;background-size:calc(var(--d) * 14px) 100%}
+      #plumbo .plumbo-row:hover{background-color:rgba(255,255,255,.05);color:#fff}
+      #plumbo .plumbo-row.plumbo-parent{cursor:pointer}
+      #plumbo .plumbo-caret{flex:none;width:12px;display:flex;color:#6b7280}
+      #plumbo .plumbo-caret svg{visibility:hidden;transition:transform .12s}
+      #plumbo .plumbo-row.plumbo-parent .plumbo-caret svg{visibility:visible;transform:rotate(90deg)}
+      #plumbo .plumbo-row.plumbo-parent.plumbo-collapsed .plumbo-caret svg{transform:rotate(0)}
+      #plumbo .plumbo-row.plumbo-parent:hover .plumbo-caret{color:#fff}
       #plumbo .plumbo-type{flex:none;display:flex;color:#6b7280}
       #plumbo .plumbo-row:hover .plumbo-type{color:#9ca3af}
       #plumbo .plumbo-path{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      #plumbo .plumbo-copy{margin-left:auto;flex:none;color:#4b5563;display:flex}
+      #plumbo .plumbo-copy{margin-left:auto;flex:none;color:#4b5563;display:flex;cursor:pointer}
       #plumbo .plumbo-row:hover .plumbo-copy{color:#9ca3af}
+      #plumbo .plumbo-row[data-depth="1"] .plumbo-path{color:#93c5fd}
+      #plumbo .plumbo-row[data-depth="1"] .plumbo-type{color:#60a5fa}
+      #plumbo .plumbo-row[data-depth="2"] .plumbo-path{color:#c4b5fd}
+      #plumbo .plumbo-row[data-depth="2"] .plumbo-type{color:#a78bfa}
+      #plumbo .plumbo-row[data-depth="3"] .plumbo-path{color:#6ee7b7}
+      #plumbo .plumbo-row[data-depth="3"] .plumbo-type{color:#34d399}
+      #plumbo .plumbo-row[data-depth="4"] .plumbo-path{color:#fcd34d}
+      #plumbo .plumbo-row[data-depth="4"] .plumbo-type{color:#fbbf24}
+      #plumbo .plumbo-row[data-depth="5"] .plumbo-path{color:#f9a8d4}
+      #plumbo .plumbo-row[data-depth="5"] .plumbo-type{color:#f472b6}
       #plumbo .plumbo-flash{color:#4ade80}
       #plumbo svg{display:block}
     CSS
@@ -125,20 +143,27 @@ module Plumbo
         document.addEventListener("click", function(event){
           var root = document.getElementById("plumbo");
           if (!root) return;
-          var hit = event.target.closest("[data-plumbo-toggle],[data-plumbo-close],[data-plumbo-copy],[data-plumbo-copy-all],[data-plumbo-clear],[data-plumbo-chip]");
+          var hit = event.target.closest("[data-plumbo-toggle],[data-plumbo-close],[data-plumbo-collapse],[data-plumbo-copy],[data-plumbo-copy-all],[data-plumbo-clear],[data-plumbo-chip]");
           if (!hit || !root.contains(hit)) return;
           var panel = root.querySelector("[data-plumbo-panel]");
           if (hit.hasAttribute("data-plumbo-toggle")) { panel.hidden = !panel.hidden; }
           else if (hit.hasAttribute("data-plumbo-close")) { panel.hidden = true; }
+          else if (hit.hasAttribute("data-plumbo-collapse")) {
+            var parentRow = hit.closest(".plumbo-row");
+            if (parentRow && parentRow.classList.contains("plumbo-parent")) {
+              parentRow.classList.toggle("plumbo-collapsed"); applyFilter();
+            }
+          }
           else if (hit.hasAttribute("data-plumbo-copy")) {
-            copy(hit.getAttribute("data-path")); flashIcon(hit.querySelector(".plumbo-copy"));
+            var copyRow = hit.closest(".plumbo-row");
+            if (copyRow) { copy(copyRow.getAttribute("data-path")); flashIcon(hit); }
           }
           else if (hit.hasAttribute("data-plumbo-copy-all")) {
             copy(visiblePaths(root).join("\\n")); flashIcon(hit);
           }
           else if (hit.hasAttribute("data-plumbo-clear")) {
             var emptied = root.querySelector("#plumbo-list");
-            if (emptied) { emptied.innerHTML = ""; renumber(emptied); refresh(); }
+            if (emptied) { emptied.innerHTML = ""; refresh(); }
           }
           else if (hit.hasAttribute("data-plumbo-chip")) {
             var cat = hit.getAttribute("data-category");
@@ -164,19 +189,41 @@ module Plumbo
           }
           return paths;
         }
-        // Show only rows matching the text query AND the active type chip.
+        function depthOf(button){ return parseInt(button.getAttribute("data-depth") || "0", 10); }
+        // Flag rows whose next row is deeper as collapsible parents, and enable
+        // their caret; clear the flag (and any collapse) on rows without children.
+        function markParents(){
+          var root = document.getElementById("plumbo");
+          if (!root) return;
+          var rows = root.querySelectorAll("#plumbo-list .plumbo-row");
+          for (var i = 0; i < rows.length; i++){
+            var next = rows[i + 1];
+            var hasChildren = next && depthOf(next) > depthOf(rows[i]);
+            if (hasChildren) { rows[i].classList.add("plumbo-parent"); }
+            else { rows[i].classList.remove("plumbo-parent", "plumbo-collapsed"); }
+          }
+        }
+        // Show only rows matching the text query AND the active type chip. While
+        // not filtering, also hide rows nested under a collapsed parent.
         function applyFilter(){
           var root = document.getElementById("plumbo");
           if (!root) return;
           var q = query.toLowerCase();
+          var filtering = q !== "" || activeCategory !== null;
           var rows = root.querySelectorAll("#plumbo-list > li");
+          var hideBelow = Infinity;
           for (var i = 0; i < rows.length; i++){
             var button = rows[i].querySelector("[data-path]");
+            var depth = button ? depthOf(button) : 0;
+            var collapsed = false;
+            if (!filtering){
+              if (depth > hideBelow) { collapsed = true; }
+              else { hideBelow = (button && button.classList.contains("plumbo-collapsed")) ? depth : Infinity; }
+            }
             var path = button ? button.getAttribute("data-path").toLowerCase() : "";
             var cat = button ? button.getAttribute("data-category") : "";
-            var matchText = !q || path.indexOf(q) !== -1;
-            var matchCat = !activeCategory || cat === activeCategory;
-            rows[i].hidden = !(matchText && matchCat);
+            var matches = (!q || path.indexOf(q) !== -1) && (!activeCategory || cat === activeCategory);
+            rows[i].hidden = collapsed || !matches;
           }
         }
         // Rebuild the type chips (counts) from the rows currently in the list.
@@ -201,29 +248,24 @@ module Plumbo
           var attr = (cat === null) ? "" : (' data-category="' + cat + '"');
           return '<button type="button" class="plumbo-chip" data-plumbo-chip' + attr + ' aria-pressed="' + pressed + '">' + label + ' ' + count + '</button>';
         }
-        function refresh(){ buildChips(); applyFilter(); }
-        // Renumber rows 1..N and sync the count badges to the current row total.
-        function renumber(list){
-          var rows = list.querySelectorAll(".plumbo-row");
-          for (var i = 0; i < rows.length; i++){
-            var index = rows[i].querySelector(".plumbo-index");
-            if (index) index.textContent = i + 1;
-          }
+        function refresh(){ markParents(); buildChips(); applyFilter(); updateCount(); }
+        // Sync the count badges to the current number of rows.
+        function updateCount(){
+          var total = document.querySelectorAll("#plumbo-list .plumbo-row").length;
           var counts = document.querySelectorAll("#plumbo .plumbo-count");
-          for (var j = 0; j < counts.length; j++){ counts[j].textContent = rows.length; }
+          for (var j = 0; j < counts.length; j++){ counts[j].textContent = total; }
         }
         var ICONS = {#{ICONS.map { |key, svg| "#{key}:'#{svg.strip}'" }.join(',')}};
         function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
         // Build a file row from [path, depth, category], mirroring the server.
         function buildRow(path, depth, category){
           var safe = escapeHtml(path);
-          var indent = depth > 0 ? ' style="margin-left:' + (depth * 12) + 'px"' : '';
           var icon = ICONS[category] || ICONS.file;
-          return '<li><button type="button" class="plumbo-row" data-plumbo-copy data-path="' + safe + '" data-category="' + escapeHtml(category) + '">'
-            + '<span class="plumbo-index"></span>'
-            + '<span class="plumbo-type"' + indent + '>' + icon + '</span>'
+          return '<li><button type="button" class="plumbo-row" data-plumbo-collapse data-path="' + safe + '" data-category="' + escapeHtml(category) + '" data-depth="' + depth + '" style="--d:' + depth + '">'
+            + '<span class="plumbo-caret">' + ICONS.chevron + '</span>'
+            + '<span class="plumbo-type">' + icon + '</span>'
             + '<span class="plumbo-path">' + safe + '</span>'
-            + '<span class="plumbo-copy">' + ICONS.copy + '</span>'
+            + '<span class="plumbo-copy" data-plumbo-copy title="Copy path">' + ICONS.copy + '</span>'
             + '</button></li>';
         }
         // Merge the files from an X-Plumbo-Files header into the panel, skipping
@@ -245,7 +287,7 @@ module Plumbo
             seen[path] = true;
             html += buildRow(path, data[j][1], data[j][2]);
           }
-          if (html) { list.insertAdjacentHTML("beforeend", html); renumber(list); }
+          if (html) { list.insertAdjacentHTML("beforeend", html); }
           refresh();
         }
         refresh();
@@ -314,28 +356,27 @@ module Plumbo
       HTML
     end
 
-    # Builds the numbered <li> rows for a list of files, in render order. Each
-    # entry is either a bare path or a [path, depth] pair; depth indents the row
-    # to show the parent/child render nesting.
+    # Builds the <li> rows for a list of files, in render order. Each entry is
+    # either a bare path or a [path, depth] pair; depth indents the row (with a
+    # guide line) to show the parent/child render nesting.
     def rows(files)
-      files.each_with_index.map do |entry, index|
+      files.map do |entry|
         path, depth = Array(entry)
-        row(path, index + 1, depth || 0)
+        row(path, depth || 0)
       end.join
     end
 
-    # Renders a single click-to-copy file row, numbered by its render order,
-    # tagged with its category (so the filter bar can show/hide it by type), and
-    # indented by its nesting depth.
-    def row(path, index, depth = 0)
+    # Renders a single file row: clicking it collapses/expands (when it has
+    # children), clicking the copy icon copies the path. Tagged with its
+    # category (for filtering) and depth (indent guide line + per-level color).
+    def row(path, depth = 0)
       safe = ERB::Util.html_escape(path)
-      indent = depth.positive? ? %( style="margin-left:#{depth * 12}px") : ""
       <<~HTML
-        <li><button type="button" class="plumbo-row" data-plumbo-copy data-path="#{safe}" data-category="#{category(path)}">
-          <span class="plumbo-index">#{index}</span>
-          <span class="plumbo-type"#{indent}>#{file_icon(path)}</span>
+        <li><button type="button" class="plumbo-row" data-plumbo-collapse data-path="#{safe}" data-category="#{category(path)}" data-depth="#{depth}" style="--d:#{depth}">
+          <span class="plumbo-caret">#{ICONS[:chevron]}</span>
+          <span class="plumbo-type">#{file_icon(path)}</span>
           <span class="plumbo-path">#{safe}</span>
-          <span class="plumbo-copy">#{ICONS[:copy]}</span>
+          <span class="plumbo-copy" data-plumbo-copy title="Copy path">#{ICONS[:copy]}</span>
         </button></li>
       HTML
     end

@@ -32,13 +32,34 @@ class PanelTest < Minitest::Test
     assert_includes html, "data-plumbo-chips"
   end
 
-  def test_indents_nested_rows_by_depth
+  def test_indents_and_tags_nested_rows_by_depth
     html = Plumbo::Panel.render([
                                   ["@app/views/posts/index.html.erb", 0],
                                   ["@app/views/posts/_post.html.erb", 1]
                                 ])
 
-    assert_includes html, "margin-left:12px"
+    assert_includes html, 'data-depth="0"'
+    assert_includes html, 'data-depth="1"'
+    assert_includes html, "--d:1"
+  end
+
+  def test_rows_no_longer_show_index_numbers
+    html = Plumbo::Panel.render(["@app/views/posts/show.html.erb"])
+
+    refute_includes html, "plumbo-index"
+  end
+
+  def test_rows_include_a_collapse_caret
+    html = Plumbo::Panel.render(["@app/views/posts/index.html.erb"])
+
+    assert_includes html, 'class="plumbo-caret"'
+  end
+
+  def test_row_toggles_collapse_and_copy_lives_on_the_icon
+    html = Plumbo::Panel.render(["@app/views/posts/index.html.erb"])
+
+    assert_includes html, 'class="plumbo-row" data-plumbo-collapse'
+    assert_includes html, 'class="plumbo-copy" data-plumbo-copy'
   end
 
   def test_rows_carry_their_category_for_filtering

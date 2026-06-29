@@ -94,8 +94,9 @@ module Plumbo
       #plumbo .plumbo-chip{flex:none;white-space:nowrap;color:#9ca3af;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9999px;padding:2px 8px;font-size:10px}
       #plumbo .plumbo-chip:hover{background:rgba(255,255,255,.1);color:#fff}
       #plumbo .plumbo-chip[aria-pressed="true"]{background:#2563eb;border-color:#2563eb;color:#fff}
-      #plumbo .plumbo-list{flex:1;min-height:0;list-style:none;margin:0;padding:0;overflow-y:auto;background:#0b1220}
-      #plumbo .plumbo-row{--d:0;display:flex;align-items:center;gap:8px;width:100%;padding:7px 16px;padding-left:calc(16px + var(--d) * 14px);color:#d1d5db;text-align:left;cursor:default;background-image:repeating-linear-gradient(to right,rgba(255,255,255,.09) 0,rgba(255,255,255,.09) 1px,transparent 1px,transparent 14px);background-repeat:no-repeat;background-position:20px 0;background-size:calc(var(--d) * 14px) 100%}
+      #plumbo .plumbo-list{flex:1;min-height:0;list-style:none;margin:0;padding:0;overflow:auto;background:#0b1220;scrollbar-width:none}
+      #plumbo .plumbo-list::-webkit-scrollbar{display:none}
+      #plumbo .plumbo-row{--d:0;display:flex;align-items:center;gap:8px;width:max-content;min-width:100%;padding:7px 16px;padding-left:calc(16px + var(--d) * 14px);color:#d1d5db;text-align:left;cursor:default;background-image:repeating-linear-gradient(to right,rgba(255,255,255,.09) 0,rgba(255,255,255,.09) 1px,transparent 1px,transparent 14px);background-repeat:no-repeat;background-position:20px 0;background-size:calc(var(--d) * 14px) 100%}
       #plumbo .plumbo-row:hover{background-color:rgba(255,255,255,.05);color:#fff}
       #plumbo .plumbo-row.plumbo-parent{cursor:pointer}
       #plumbo .plumbo-caret{flex:none;width:12px;display:flex;color:#6b7280}
@@ -105,9 +106,9 @@ module Plumbo
       #plumbo .plumbo-row.plumbo-parent:hover .plumbo-caret{color:#fff}
       #plumbo .plumbo-type{flex:none;display:flex;color:#6b7280}
       #plumbo .plumbo-row:hover .plumbo-type{color:#9ca3af}
-      #plumbo .plumbo-path{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      #plumbo .plumbo-copy{margin-left:auto;flex:none;color:#4b5563;display:flex;cursor:pointer}
-      #plumbo .plumbo-row:hover .plumbo-copy{color:#9ca3af}
+      #plumbo .plumbo-path{flex:none;white-space:nowrap}
+      #plumbo .plumbo-copy{position:sticky;right:16px;margin-left:auto;flex:none;color:#4b5563;display:flex;cursor:pointer;padding-left:20px;background:linear-gradient(to right,rgba(11,18,32,0),#0b1220 16px)}
+      #plumbo .plumbo-row:hover .plumbo-copy{color:#9ca3af;background:linear-gradient(to right,rgba(23,30,43,0),#171e2b 16px)}
       #plumbo .plumbo-row[data-depth="1"] .plumbo-path{color:#93c5fd}
       #plumbo .plumbo-row[data-depth="1"] .plumbo-type{color:#60a5fa}
       #plumbo .plumbo-row[data-depth="2"] .plumbo-path{color:#c4b5fd}
@@ -120,6 +121,7 @@ module Plumbo
       #plumbo .plumbo-row[data-depth="5"] .plumbo-type{color:#f472b6}
       #plumbo .plumbo-flash{color:#4ade80}
       #plumbo svg{display:block}
+      .plumbo-hl{position:fixed;z-index:2147482000;pointer-events:none;background:rgba(59,130,246,.18);outline:2px solid #3b82f6;outline-offset:-1px;border-radius:2px}
     CSS
 
     JS = <<~JS.freeze
@@ -163,7 +165,7 @@ module Plumbo
           }
           else if (hit.hasAttribute("data-plumbo-clear")) {
             var emptied = root.querySelector("#plumbo-list");
-            if (emptied) { emptied.innerHTML = ""; refresh(); }
+            if (emptied) { emptied.innerHTML = ""; clearHighlight(); refresh(); }
           }
           else if (hit.hasAttribute("data-plumbo-chip")) {
             var cat = hit.getAttribute("data-category");
@@ -290,6 +292,75 @@ module Plumbo
           if (html) { list.insertAdjacentHTML("beforeend", html); }
           refresh();
         }
+        // Hover-to-highlight: map a panel row back to the region(s) it rendered.
+        // Relies on Rails' annotate_rendered_view_with_filenames, which wraps each
+        // template/partial in `<!-- BEGIN path -->`/`<!-- END path -->` comments
+        // (path relative to Rails.root). Overlays are throwaway, pointer-events:none.
+        var overlays = [];
+        function clearHighlight(){
+          for (var i = 0; i < overlays.length; i++){ if (overlays[i].parentNode) overlays[i].parentNode.removeChild(overlays[i]); }
+          overlays = [];
+        }
+        // Walk every comment node and pair BEGIN/END markers by path using a stack
+        // (markers nest cleanly), returning {path, begin, end} for each pair.
+        function commentPairs(){
+          var pairs = [], stack = [];
+          var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT, null, false);
+          var node;
+          while ((node = walker.nextNode())){
+            var m = /^\\s*(BEGIN|END)\\s+(.+?)\\s*$/.exec(node.nodeValue || "");
+            if (!m) continue;
+            if (m[1] === "BEGIN"){ stack.push({ path: m[2], begin: node }); }
+            else {
+              for (var i = stack.length - 1; i >= 0; i--){
+                if (stack[i].path === m[2]){ pairs.push({ path: m[2], begin: stack[i].begin, end: node }); stack.splice(i, 1); break; }
+              }
+            }
+          }
+          return pairs;
+        }
+        // Draw one fixed overlay around the whole region a row rendered — a single
+        // bounding box, not one per line/inline fragment, so nested links and labels
+        // don't each get their own border. A looped partial still yields one box per
+        // instance (one comment pair each). A row's data-path carries the configured
+        // prefix (e.g. "@app/..."); the comment path doesn't — endsWith matches
+        // regardless of prefix. Rows with no rendered region simply match nothing.
+        function highlight(path){
+          clearHighlight();
+          if (!path) return;
+          var pairs = commentPairs();
+          for (var i = 0; i < pairs.length; i++){
+            if (!path.endsWith(pairs[i].path)) continue;
+            var range = document.createRange();
+            try { range.setStartAfter(pairs[i].begin); range.setEndBefore(pairs[i].end); } catch (e) { continue; }
+            var rect = range.getBoundingClientRect();
+            if (rect.width <= 0 && rect.height <= 0) continue;
+            var box = document.createElement("div");
+            box.className = "plumbo-hl";
+            box.style.cssText = "top:" + rect.top + "px;left:" + rect.left + "px;width:" + rect.width + "px;height:" + rect.height + "px";
+            document.body.appendChild(box);
+            overlays.push(box);
+          }
+        }
+        function rowFor(target, root){
+          if (!root || !target || !target.closest) return null;
+          var row = target.closest(".plumbo-row");
+          return (row && root.contains(row)) ? row : null;
+        }
+        // Delegate hover like the click/input handlers. mouseover bubbles, so it
+        // fires for every move; track the row under the cursor and only re-highlight
+        // when it changes (re-paint on row→row, clear when leaving rows). A null
+        // relatedTarget on mouseout means the pointer left the window — clear then.
+        var hoveredRow = null;
+        document.addEventListener("mouseover", function(event){
+          var row = rowFor(event.target, document.getElementById("plumbo"));
+          if (row === hoveredRow) return;
+          hoveredRow = row;
+          highlight(row ? row.getAttribute("data-path") : null);
+        });
+        document.addEventListener("mouseout", function(event){
+          if (!event.relatedTarget && hoveredRow) { hoveredRow = null; clearHighlight(); }
+        });
         refresh();
         // Read the file list off every fetch response (Turbo Drive/Frame/Stream
         // and custom fetch all go through fetch) so the panel keeps up without a
@@ -305,7 +376,7 @@ module Plumbo
         }
         // A full Turbo Drive visit swaps in a fresh panel; reset the filter to
         // match the new page, then rebuild.
-        document.addEventListener("turbo:load", function(){ query = ""; activeCategory = null; refresh(); });
+        document.addEventListener("turbo:load", function(){ query = ""; activeCategory = null; clearHighlight(); refresh(); });
       })();
     JS
 

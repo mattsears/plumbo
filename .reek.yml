@@ -13,6 +13,10 @@ detectors:
     max_params: 4
   TooManyInstanceVariables:
     max_instance_variables: 6
+    # Plumbo::Configuration is a settings object — each option is one ivar, so the
+    # count grows with config surface, not with tangled responsibilities.
+    exclude:
+      - Plumbo::Configuration
   TooManyMethods:
     max_methods: 20
   UncommunicativeMethodName:

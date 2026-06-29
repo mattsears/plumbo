@@ -27,6 +27,7 @@ class ConfigurationTest < Minitest::Test
     assert_equal 500, @config.max_files
     assert_equal "@", @config.path_prefix
     assert @config.include_stimulus
+    assert @config.highlight
     assert_equal "app/javascript", @config.javascript_root
   end
 

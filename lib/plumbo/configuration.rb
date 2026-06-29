@@ -18,6 +18,13 @@ module Plumbo
     # in the rendered HTML. Defaults to true.
     attr_accessor :include_stimulus
 
+    # Whether hovering a view/partial/layout row highlights its rendered region
+    # on the page. Defaults to true. When on, Plumbo enables Rails' built-in
+    # annotate_rendered_view_with_filenames so the rendered HTML carries the
+    # BEGIN/END comment markers the highlight reads. Turn off to leave the host
+    # app's HTML untouched (highlighting then does nothing).
+    attr_accessor :highlight
+
     # Source directory Stimulus controllers are mapped into. Combined with the
     # "controllers/" subdirectory and the Stimulus identifier to form the path.
     attr_accessor :javascript_root
@@ -29,6 +36,7 @@ module Plumbo
       @max_files = 500
       @path_prefix = "@"
       @include_stimulus = true
+      @highlight = true
       @javascript_root = "app/javascript"
       @root = nil
     end

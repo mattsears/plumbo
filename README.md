@@ -31,6 +31,9 @@ showing how many files rendered the current page.
   and Stimulus controllers nested (and color-coded) under their parent.
 - **Collapse or expand** a parent by clicking its row; **copy** a single path with
   its copy icon, or **Copy All** for the whole (filtered) list.
+- **Hover a row** to highlight the part of the page that file rendered — a partial
+  used in a loop lights up every instance. Rows with no on-page output (controllers,
+  helpers, JavaScript) simply don't highlight.
 - **Filter** by typing in the search box, or click a type chip — Controllers,
   Views, Partials, Stimulus, … — to show just one kind.
 - **Clear All** empties the list so you can watch fresh files appear as you click
@@ -49,6 +52,7 @@ Plumbo.configure do |c|
   c.max_files        = 500                     # safety cap on listed files
   c.include_stimulus = true                    # list Stimulus controllers
   c.javascript_root  = "app/javascript"        # source dir Stimulus paths map into
+  c.highlight        = true                     # highlight a file's region on hover
 end
 ```
 
@@ -64,6 +68,13 @@ every response carries an `X-Plumbo-Files` header that the panel reads on each
 > Only Stimulus controllers written as `data-controller` in a rendered `.erb` are
 > detected — those emitted by helpers or ViewComponents, and other JavaScript,
 > aren't listed.
+
+Hover highlighting reuses Rails' built-in
+`annotate_rendered_view_with_filenames`, which Plumbo enables in development so each
+rendered template and partial is wrapped in `<!-- BEGIN … -->`/`<!-- END … -->`
+comments. The panel reads those markers to locate a file's output on the page. This
+adds the comments to your development HTML; set `c.highlight = false` to leave the
+markup untouched (the panel still lists files, just without hover highlighting).
 
 ## Notes
 

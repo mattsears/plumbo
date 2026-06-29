@@ -96,6 +96,36 @@ class PanelTest < Minitest::Test
     assert_equal :file, Plumbo::Panel.category("@config/routes.txt")
   end
 
+  def test_includes_highlight_overlay_styles
+    html = Plumbo::Panel.render(["@app/views/posts/index.html.erb"])
+
+    assert_includes html, ".plumbo-hl{"
+    assert_includes html, "pointer-events:none"
+  end
+
+  def test_wires_hover_to_highlight_off_render_annotations
+    html = Plumbo::Panel.render(["@app/views/posts/index.html.erb"])
+
+    assert_includes html, "function commentPairs()"
+    assert_includes html, "BEGIN|END"
+    assert_includes html, "getBoundingClientRect()"
+    assert_includes html, 'addEventListener("mouseover"'
+  end
+
+  def test_rows_scroll_horizontally_with_hidden_scrollbars
+    html = Plumbo::Panel.render(["@app/views/posts/index.html.erb"])
+
+    assert_includes html, "width:max-content"
+    assert_includes html, ".plumbo-list::-webkit-scrollbar{display:none}"
+    refute_includes html, "text-overflow:ellipsis"
+  end
+
+  def test_copy_icon_stays_pinned_when_rows_scroll
+    html = Plumbo::Panel.render(["@app/views/posts/index.html.erb"])
+
+    assert_includes html, "#plumbo .plumbo-copy{position:sticky;right:16px"
+  end
+
   def test_distinct_icons_for_different_types
     controller = Plumbo::Panel.file_icon("@app/controllers/posts_controller.rb")
     view = Plumbo::Panel.file_icon("@app/views/posts/index.html.erb")
